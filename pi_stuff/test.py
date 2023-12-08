@@ -9,6 +9,7 @@ import time
 # constants
 stop_car = 65000 // 2
 start_car = 37000
+# PD consts
 P_VAL = 1
 D_VAL = 0.1
 
@@ -16,8 +17,9 @@ D_VAL = 0.1
 lastTime = 0 
 lastError = 0
 tickCount = 0
-stopSignsReached = 0
+stopSignsReached = 0 # num stop signs
 currentSpeed = start_car
+# store data for plots
 pValues = open("p_values.txt", 'a')
 dValues = open("d_values.txt", 'a')
 steeringValues = open("steering_values.txt", 'a')
@@ -262,13 +264,16 @@ def deviation_to_command(error, lastTime, lastError, dValues, pValues):
     dt = now - lastTime
     deviation = steering_angle - 90 # equivalent to angle_to_mid_deg variable 
 
+    # Get P and D values and figure out the actual command
     derivative = D_VAL * (error - lastError) / dt 
     proportional = P_VAL * error
     dValues.write(str(derivative) + '\n')
     pValues.write(str(proportional) + '\n')
 
+    # Actual command
     PID_output = int(derivative + proportional)
 
+    # Next values
     lastError = error
     lastTime = time.time()
     print(PID_output)
@@ -280,9 +285,11 @@ def adjust_steering(control_val, mcp4728, steeringValues):
     if control_val < -45: control_val = -45
     elif control_val > 45: control_val = 45
     center = 65000 / 2
+    # Get the steering input
     input = int(center + control_val * (32500 / 45))
     print("Controller steering input = " + str(input))
     steeringValues.write(str(input) + '\n')
+    # Set the steering input
     mcp4728.channel_a.value = input
 
 
@@ -317,6 +324,7 @@ try:
     throttleValues.write(str(start_car) + '\n')
 
     while True:
+        # Get the frame from the camera
         ret,original_frame = video.read()
         frame = cv2.resize(original_frame, (160, 120))
         frame = cv2.flip(frame,-1)
@@ -348,6 +356,7 @@ try:
         # Convert into actual control command and store results
         ret = deviation_to_command(deviation, lastTime, lastError, dValues, pValues)
         adjust_steering(ret[0], mcp4728, steeringValues)
+        # Store previous values
         lastTime = ret[1]
         lastError = ret[2]
 
@@ -358,19 +367,23 @@ try:
                 print("Stop sign detected!")
                 # Stop the vehicle for 3s if first, forever if second
                 if (stopSignsReached == 0):
+                    # Handle first stop sign interaction
                     mcp4728.channel_c.value = stop_car
                     throttleValues.write(str(stop_car) + '\n')
                     time.sleep(3)
+                    # Resume driving
                     mcp4728.channel_c.value = currentSpeed
                     throttleValues.write(str(currentSpeed) + '\n')
                     stopSignsReached += 1
                 elif (stopSignsReached == 1):
+                    # Second stop sign, terminate
                     mcp4728.channel_c.value = stop_car
                     throttleValues.write(str(stop_car) + '\n')
                     break
         tickCount += 1
         
 except KeyboardInterrupt or Exception:
+    # Handling for end to program
     print("Stopping program...")
     mcp4728.channel_c.value = stop_car
     throttleValues.write(str(stop_car) + '\n')
