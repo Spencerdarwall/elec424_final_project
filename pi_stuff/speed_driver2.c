@@ -6,6 +6,12 @@
 #include <linux/interrupt.h>
 #include <linux/moduleparam.h>
 
+/* We refactored the Project 2 Driver to work with the speed encoder.
+ * The LED GPIO descriptor is not used. The button GPIO descriptor
+ * represents the speed encoder. Elapsed Time is sent to a parameters file
+ * to be used by the main py file for adjusting the speed.
+ */
+
 /* Button and LED GPIO Descriptors */
 static struct gpio_desc *led_gpio;
 static struct gpio_desc *button_gpio;
@@ -117,81 +123,3 @@ MODULE_DESCRIPTION("424\'s finest");
 MODULE_AUTHOR("GOAT");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:adam_driver");
-
-
-
-// #include <linux/module.h>
-// #include <linux/of_device.h>
-// #include <linux/kernel.h>
-// #include <linux/gpio/consumer.h>
-// #include <linux/platform_device.h>
-// #include <linux/interrupt.h>
-// #include <linux/of.h>
-// #include <linux/ktime.h>
-
-// static int irq_number;
-// static struct gpio_desc *gpio_speed;
-// unsigned long t1 = 0;
-// unsigned long t2;
-
-// unsigned long get_time_us(void) {
-//     return ktime_to_us(ktime_get_real());
-// }
-
-
-// static irq_handler_t gpio_irq_handler(unsigned int irq, void *dev_id, struct
-// pt_regs *regs) {
-//     unsigned long elapsedTime;
-//     t2 = get_time_us();
-//     elapsedTime = t2 - t1;
-//     t1 = t2;
-
-//     // Print elapsed time in microseconds as an integer
-//     printk(KERN_INFO "Speed Encoder: %lu us.\n", elapsedTime);
-
-//     return (irq_handler_t) IRQ_HANDLED;
-// }
-
-// static int led_probe(struct platform_device *pdev) {
-//     printk(KERN_INFO "LED module inserted :)\n");
-//     t1 = get_time_us();
-//     gpio_speed = devm_gpiod_get(&pdev->dev, "speed", GPIOD_IN);
-    
-//     gpiod_set_debounce(gpio_speed, 1000000);
-//     irq_number = gpiod_to_irq(gpio_speed);
-//     if (request_irq(irq_number, (irq_handler_t) gpio_irq_handler, IRQF_TRIGGER_RISING, "encoder-gpio,gpio", &pdev->dev) != 0) {
-//         printk("Failed to request IRQ.\n");
-//         return -1;
-//     }
-
-//     printk("Successfully requested IRQ.\n");
-
-//     return 0;
-// }
-
-// static int led_remove(struct platform_device *pdev) {
-//     free_irq(irq, &pdev->dev);
-//     printk(KERN_INFO "Free irq\n");
-//     return 0;
-// }
-
-// static struct of_device_id matchy_match[] = {
-//     {.compatible = "encoder-gpio,gpio",},
-//     {/* sentinel */},
-// };
-
-// static struct platform_driver adam_driver = {
-//     .probe = led_probe,
-//     .remove = led_remove,
-//     .driver = {
-//         .name = "The Rock: this name doesn't even matter",
-//         .owner = THIS_MODULE,
-//         .of_match_table = matchy_match,
-//     },
-// };
-
-// module_platform_driver(adam_driver);
-// MODULE_DESCRIPTION("424's finest");
-// MODULE_AUTHOR("GOAT");
-// MODULE_LICENSE("GPL v2");
-// MODULE_ALIAS("platform:adam_driver");
