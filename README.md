@@ -1,4 +1,4 @@
-# 🏎️ ELEC 424 - Final Project: Self-Driving Car 🚗
+# 🏎️ ELEC 424 - Final Project: Self-Driving Car 🏎️
 
 ## 🌟 Project Overview
 Welcome to our undergraduate final project for ELEC 424, focusing on developing a self-driving car using a Raspberry Pi 4. Our mission is to transform a standard RC car into an autonomous vehicle capable of making its own navigational decisions. 🤖
