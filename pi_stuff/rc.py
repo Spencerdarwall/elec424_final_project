@@ -8,6 +8,8 @@ import busio
 import adafruit_mcp4728
 import time
 
+# THIS HELPS TO RECALIBRATE THE RC CAR BEFORE NEXT ATTEMPT
+
 # Initialize devices
 i2c = busio.I2C(board.SCL, board.SDA)
 mcp4728 = adafruit_mcp4728.MCP4728(i2c, 0x64)
