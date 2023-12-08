@@ -1,3 +1,12 @@
+"""
+This python file has code taken from and influenced by the following sources:
+https://www.hackster.io/coming-soon/coming-soon-aa15c2
+https://www.hackster.io/there-are-four-of-us/autonomous-rc-car-d71671
+Which are RC car groups from the previous year. 
+
+Adjustments had to be made to get our respective car to function correctly.
+"""
+
 import cv2
 import numpy as np
 import math
