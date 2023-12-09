@@ -92,25 +92,28 @@ def getBoundaries(filename):
     """
     default_lower_percent = 50
     default_upper_percent = 100
+    # Access the file
     with open(filename, "r") as f:
         boundaries = f.readlines()
         lower_data = [val for val in boundaries[0].split(",")]
         upper_data = [val for val in boundaries[1].split(",")]
-
+        # Check the lower data length
         if len(lower_data) >= 4:
             lower_percent = float(lower_data[3])
         else:
             lower_percent = default_lower_percent
-
+        # Check the upper data length
         if len(upper_data) >= 4:
             upper_percent = float(upper_data[3])
         else:
             upper_percent = default_upper_percent
 
+        # Get upper and lower
         lower = [int(x) for x in lower_data[:3]]
         upper = [int(x) for x in upper_data[:3]]
         boundaries = [lower, upper]
         percentages = [lower_percent, upper_percent]
+    # Return the boundaries and percentages
     return boundaries, percentages
 
 def convert_to_HSV(frame):
@@ -147,28 +150,33 @@ def region_of_interest(edges):
     return cropped_edges
 
 def detect_line_segments(cropped_edges):
+    # Relevant constants
     rho = 1  
     theta = np.pi / 180  
     min_threshold = 10 
+    # Get lines
     line_segments = cv2.HoughLinesP(cropped_edges, rho, theta, min_threshold, 
                                     np.array([]), minLineLength=5, maxLineGap=0)
     return line_segments
 
 def average_slope_intercept(frame, line_segments):
     lane_lines = []
-
+    # Handle the case where no lines can be found
     if line_segments is None:
         print("no line segment detected")
         return lane_lines
 
+    # Initialize variables
     height, width,_ = frame.shape
     left_fit = []
     right_fit = []
     boundary = 1/3
 
+    # ID boundaries
     left_region_boundary = width * (1 - boundary) 
     right_region_boundary = width * boundary 
 
+    # Iterating through each segment
     for line_segment in line_segments:
         for x1, y1, x2, y2 in line_segment:
             if x1 == x2:
@@ -176,9 +184,11 @@ def average_slope_intercept(frame, line_segments):
                 continue
 
             fit = np.polyfit((x1, x2), (y1, y2), 1)
+            # Fit the edge
             slope = (y2 - y1) / (x2 - x1)
             intercept = y1 - (slope * x1)
 
+            # Comparing line slope
             if slope < 0:
                 if x1 < left_region_boundary and x2 < left_region_boundary:
                     left_fit.append((slope, intercept))
@@ -186,10 +196,12 @@ def average_slope_intercept(frame, line_segments):
                 if x1 > right_region_boundary and x2 > right_region_boundary:
                     right_fit.append((slope, intercept))
 
+    # Left lane
     left_fit_average = np.average(left_fit, axis=0)
     if len(left_fit) > 0:
         lane_lines.append(make_points(frame, left_fit_average))
 
+    # Right lane
     right_fit_average = np.average(right_fit, axis=0)
     if len(right_fit) > 0:
         lane_lines.append(make_points(frame, right_fit_average))
@@ -217,9 +229,11 @@ def make_points(frame, line):
 def display_lines(frame, lines, line_color=(0, 255, 0), line_width=6): # line color (B,G,R)
     line_image = np.zeros_like(frame)
 
+    # Displaying each line, if they are present
     if lines is not None:
         for line in lines:
             for x1, y1, x2, y2 in line:
+                # Display
                 cv2.line(line_image, (x1, y1), (x2, y2), line_color, line_width)
 
     line_image = cv2.addWeighted(frame, 0.8, line_image, 1, 1)  
@@ -249,20 +263,23 @@ def get_steering_angle(frame, lane_lines):
     return steering_angle
 
 def display_heading_line(frame, steering_angle, line_color=(0, 0, 255), line_width=5 ):
-
+    # Get frame shape
     heading_image = np.zeros_like(frame)
     height, width, _ = frame.shape
 
+    # Extrapolate the steering angle
     steering_angle_radian = steering_angle / 180.0 * math.pi
     x1 = int(width / 2)
     y1 = height
     x2 = int(x1 - height / 2 / math.tan(steering_angle_radian))
     y2 = int(height / 2)
 
+    # Update the lines
     cv2.line(heading_image, (x1, y1), (x2, y2), line_color, line_width)
 
     heading_image = cv2.addWeighted(frame, 0.8, heading_image, 1, 1)
 
+    # Return image
     return heading_image
 
 def deviation_to_command(error, lastTime, lastError, dValues, pValues):
